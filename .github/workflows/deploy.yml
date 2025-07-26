@@ -3,15 +3,15 @@ name: Deploy Strapi to ECS
 on:
   push:
     branches:
-      - main
+      - master
 
 env:
   AWS_REGION: us-east-2
-  ECR_REPO: 607700977843.dkr.ecr.us-east-2.amazonaws.com/rohana-strapi-repo
-  CONTAINER_NAME: rohana-strapi
-  ECS_CLUSTER: rohana-strapi-cluster
-  ECS_SERVICE: rohana-strapi-service
-  ECS_TASK_DEFINITION: rohana-strapi-task
+  ECR_REPO: 607700977843.dkr.ecr.us-east-2.amazonaws.com/strapi-appmaxxy
+  CONTAINER_NAME: madhan-strapi
+  ECS_CLUSTER: madhan-strapi-cluster
+  ECS_SERVICE: madhan-strapi-service
+  ECS_TASK_DEFINITION: madhan-strapi-task
 
 jobs:
   deploy:
@@ -39,7 +39,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t $ECR_REPO:$TAG ./my-strapi-project
+          docker build -t $ECR_REPO:$TAG ./my-strapi
 
       - name: Push Docker image to ECR
         run: |
