@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15
+    image: postgres:12
     container_name: postgres
     environment:
       POSTGRES_DB: strapi_db
@@ -19,10 +19,18 @@ services:
       dockerfile: Dockerfile
     container_name: strapi
     env_file: .env
-    ports:
-      - "1337:1337"
+    environment:
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: strapi_db
+      DATABASE_USERNAME: strapi_user
+      DATABASE_PASSWORD: secretpassword
+      STRAPI_ADMIN_BACKEND_URL: http://3.144.250.114:1337
     depends_on:
       - postgres
+    ports:
+      - "1337:1337"
     networks:
       - strapi-network
 
@@ -44,3 +52,4 @@ volumes:
 networks:
   strapi-network:
     driver: bridge
+
