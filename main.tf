@@ -200,7 +200,7 @@ resource "aws_ecs_service" "madhan_strapi_service" {
     aws_db_instance.strapi_db
   ]
 } 
-resource "aws_cloudwatch_dashboard" "strapi_dashboard" {
+resource "aws_cloudwatch_dashboard" "madhan_dashboard" {
   dashboard_name = "StrapiMonitoring"
   dashboard_body = jsonencode({
     widgets = [
@@ -223,7 +223,7 @@ resource "aws_cloudwatch_dashboard" "strapi_dashboard" {
 }
 
 # OPTIONAL - CPU Alarm
-resource "aws_cloudwatch_metric_alarm" "high_cpu_alarm" {
+resource "aws_cloudwatch_metric_alarm" "madhan_high_cpu_alarm" {
   alarm_name          = "HighCPUUtilization"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
