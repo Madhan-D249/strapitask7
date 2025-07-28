@@ -4,11 +4,6 @@ variable "region" {
   default     = "us-east-2"
 }
 
-variable "public_subnet_ids" {
-  description = "List of public subnet IDs"
-  type        = list(string)
-}
-
 variable "container_image" {
   description = "Strapi container image"
   type        = string
