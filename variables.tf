@@ -49,12 +49,3 @@ variable "database_password" {
   sensitive   = true
 }
 
-variable "execution_role_arn" {
-  description = "ECS execution role ARN"
-  type        = string
-}
-
-variable "task_role_arn" {
-  description = "ECS task role ARN"
-  type        = string
-}

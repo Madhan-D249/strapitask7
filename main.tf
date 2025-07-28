@@ -141,8 +141,8 @@ resource "aws_ecs_task_definition" "madhan_strapi_task" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "512"
   memory                   = "1024"
-  execution_role_arn       = var.execution_role_arn
-  task_role_arn            = var.task_role_arn
+  execution_role_arn = aws_iam_role.madhan_ecs_task_execution_role.arn
+  task_role_arn      = aws_iam_role.madhan_ecs_task_execution_role.arn
 
   container_definitions = jsonencode([{
     name      = "madhan-strapi"
@@ -238,8 +238,8 @@ resource "aws_cloudwatch_metric_alarm" "madhan_high_cpu_alarm" {
   }
 }
 
-resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "ecs-task-execution-role"
+resource "aws_iam_role" "madhan_ecs_task_execution_role" {
+  name = "madhan_ecs-task-execution-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -255,11 +255,11 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   })
 
   tags = {
-    Name = "ecs-task-execution-role"
+    Name = "madhan_ecs-task-execution-role"
   }
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_execution_policy" {
-  role       = aws_iam_role.ecs_task_execution_role.name
+resource "aws_iam_role_policy_attachment" "madhan_ecs_execution_policy" {
+  role       = aws_iam_role.madhan_ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
