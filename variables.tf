@@ -5,32 +5,56 @@ variable "region" {
 }
 
 variable "container_image" {
-  description = "Strapi container image"
+  description = "Docker image URL for the Strapi application"
   type        = string
 }
 
 variable "app_keys" {
-  description = "Strapi APP_KEYS"
-  type        = string
-  sensitive   = true
-}
-
-variable "api_token_salt" {
-  description = "Strapi API_TOKEN_SALT"
+  description = "Strapi application keys"
   type        = string
   sensitive   = true
 }
 
 variable "admin_jwt_secret" {
-  description = "Strapi ADMIN_JWT_SECRET"
+  description = "Strapi admin JWT secret"
   type        = string
   sensitive   = true
 }
 
 variable "jwt_secret" {
-  description = "Strapi JWT_SECRET"
+  description = "Strapi user JWT secret"
   type        = string
   sensitive   = true
+}
+
+variable "api_token_salt" {
+  description = "Strapi API token salt"
+  type        = string
+  sensitive   = true
+}
+
+variable "task_role_arn" {
+  description = "IAM role ARN for the ECS task"
+  type        = string
+}
+
+variable "execution_role_arn" {
+  description = "IAM role ARN for ECS task execution"
+  type        = string
+}
+
+# ✅ Add these for DB connection
+
+variable "database_client" {
+  description = "Database client type (e.g. postgres)"
+  type        = string
+  default     = "postgres"
+}
+
+variable "database_port" {
+  description = "Database port"
+  type        = string
+  default     = "5432"
 }
 
 variable "db_name" {
@@ -49,3 +73,8 @@ variable "database_password" {
   sensitive   = true
 }
 
+variable "capacity_providers" {
+  description = "ECS capacity providers (FARGATE, FARGATE_SPOT)"
+  type        = list(string)
+  default     = ["FARGATE_SPOT", "FARGATE"]
+}

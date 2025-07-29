@@ -141,8 +141,8 @@ resource "aws_ecs_task_definition" "madhan_strapi_task" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "512"
   memory                   = "1024"
-  execution_role_arn       = aws_iam_role.madhan_ecs_task_execution_role.arn
-  task_role_arn            = aws_iam_role.madhan_ecs_task_execution_role.arn
+  execution_role_arn       = var.execution_role_arn
+  task_role_arn            = var.task_role_arn
 
   container_definitions = jsonencode([{
     name      = "madhan-strapi"
@@ -181,7 +181,12 @@ resource "aws_ecs_service" "madhan_strapi_service" {
   cluster         = aws_ecs_cluster.madhan_strapi_cluster.id
   task_definition = aws_ecs_task_definition.madhan_strapi_task.arn
   desired_count   = 1
-  launch_type     = "FARGATE"
+
+  capacity_provider_strategy {
+    for_each          = toset(var.capacity_providers)
+    capacity_provider = each.key
+    weight            = 1
+  }
 
   network_configuration {
     subnets          = ["subnet-0c0bb5df2571165a9", "subnet-0cc2ddb32492bcc41"]
@@ -199,67 +204,4 @@ resource "aws_ecs_service" "madhan_strapi_service" {
     aws_lb_listener.madhan_listener,
     aws_db_instance.strapi_db
   ]
-}
-resource "aws_cloudwatch_dashboard" "madhan_dashboard" {
-  dashboard_name = "StrapiMonitoring"
-  dashboard_body = jsonencode({
-    widgets = [
-      {
-        type   = "metric",
-        x      = 0,
-        y      = 0,
-        width  = 12,
-        height = 6,
-        properties = {
-          metrics = [
-            ["ECS/ContainerInsights", "CPUUtilization", "ClusterName", aws_ecs_cluster.madhan_strapi_cluster.name]
-          ],
-          title  = "Strapi CPU Usage",
-          region = var.region
-        }
-      }
-    ]
-  })
-}
-
-# OPTIONAL - CPU Alarm
-resource "aws_cloudwatch_metric_alarm" "madhan_high_cpu_alarm" {
-  alarm_name          = "HighCPUUtilization"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 2
-  metric_name         = "CPUUtilization"
-  namespace           = "ECS/ContainerInsights"
-  period              = 60
-  statistic           = "Average"
-  threshold           = 80
-  alarm_description   = "CPU usage is above 80%"
-  dimensions = {
-    ClusterName = aws_ecs_cluster.madhan_strapi_cluster.name
-  }
-}
-
-resource "aws_iam_role" "madhan_ecs_task_execution_role" {
-  name = "madhan_ecs-task-execution-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        },
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-
-  tags = {
-    Name = "madhan_ecs-task-execution-role"
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "madhan_ecs_execution_policy" {
-  role       = aws_iam_role.madhan_ecs_task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
