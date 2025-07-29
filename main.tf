@@ -71,19 +71,19 @@ resource "aws_db_parameter_group" "strapi_pg" {
 
 # RDS PostgreSQL
 resource "aws_db_instance" "strapi_db" {
-  identifier              = "strapi-db"
-  engine                  = "postgres"
-  engine_version          = "12.22"
-  instance_class          = "db.t3.micro"
-  allocated_storage       = 20
-  db_name                 = var.db_name
-  username                = var.database_username
-  password                = var.database_password
-  publicly_accessible     = true
-  skip_final_snapshot     = true
-  vpc_security_group_ids  = [aws_security_group.madhan_sg.id]
-  db_subnet_group_name    = aws_db_subnet_group.strapi_db_subnet_group.name
-  parameter_group_name    = aws_db_parameter_group.strapi_pg.name
+  identifier             = "strapi-db"
+  engine                 = "postgres"
+  engine_version         = "12.22"
+  instance_class         = "db.t3.micro"
+  allocated_storage      = 20
+  db_name                = var.db_name
+  username               = var.database_username
+  password               = var.database_password
+  publicly_accessible    = true
+  skip_final_snapshot    = true
+  vpc_security_group_ids = [aws_security_group.madhan_sg.id]
+  db_subnet_group_name   = aws_db_subnet_group.strapi_db_subnet_group.name
+  parameter_group_name   = aws_db_parameter_group.strapi_pg.name
 }
 
 # ALB
@@ -141,8 +141,8 @@ resource "aws_ecs_task_definition" "madhan_strapi_task" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "512"
   memory                   = "1024"
-  execution_role_arn = aws_iam_role.madhan_ecs_task_execution_role.arn
-  task_role_arn      = aws_iam_role.madhan_ecs_task_execution_role.arn
+  execution_role_arn       = aws_iam_role.madhan_ecs_task_execution_role.arn
+  task_role_arn            = aws_iam_role.madhan_ecs_task_execution_role.arn
 
   container_definitions = jsonencode([{
     name      = "madhan-strapi"
@@ -153,16 +153,16 @@ resource "aws_ecs_task_definition" "madhan_strapi_task" {
       hostPort      = 1337
     }]
     environment = [
-      { name = "DATABASE_CLIENT",      value = "postgres" },
-      { name = "DATABASE_HOST",        value = aws_db_instance.strapi_db.address },
-      { name = "DATABASE_PORT",        value = "5432" },
-      { name = "DATABASE_NAME",        value = var.db_name },
-      { name = "DATABASE_USERNAME",    value = var.database_username  },
-      { name = "DATABASE_PASSWORD",    value = var.database_password  },
-      { name = "APP_KEYS",             value = var.app_keys },
-      { name = "ADMIN_JWT_SECRET",     value = var.admin_jwt_secret },
-      { name = "JWT_SECRET",           value = var.jwt_secret },
-      { name = "API_TOKEN_SALT",       value = var.api_token_salt }
+      { name = "DATABASE_CLIENT", value = "postgres" },
+      { name = "DATABASE_HOST", value = aws_db_instance.strapi_db.address },
+      { name = "DATABASE_PORT", value = "5432" },
+      { name = "DATABASE_NAME", value = var.db_name },
+      { name = "DATABASE_USERNAME", value = var.database_username },
+      { name = "DATABASE_PASSWORD", value = var.database_password },
+      { name = "APP_KEYS", value = var.app_keys },
+      { name = "ADMIN_JWT_SECRET", value = var.admin_jwt_secret },
+      { name = "JWT_SECRET", value = var.jwt_secret },
+      { name = "API_TOKEN_SALT", value = var.api_token_salt }
     ]
     logConfiguration = {
       logDriver = "awslogs"
@@ -199,22 +199,22 @@ resource "aws_ecs_service" "madhan_strapi_service" {
     aws_lb_listener.madhan_listener,
     aws_db_instance.strapi_db
   ]
-} 
+}
 resource "aws_cloudwatch_dashboard" "madhan_dashboard" {
   dashboard_name = "StrapiMonitoring"
   dashboard_body = jsonencode({
     widgets = [
       {
-        type = "metric",
-        x = 0,
-        y = 0,
-        width = 12,
+        type   = "metric",
+        x      = 0,
+        y      = 0,
+        width  = 12,
         height = 6,
         properties = {
           metrics = [
-            [ "ECS/ContainerInsights", "CPUUtilization", "ClusterName", aws_ecs_cluster.madhan_strapi_cluster.name ]
+            ["ECS/ContainerInsights", "CPUUtilization", "ClusterName", aws_ecs_cluster.madhan_strapi_cluster.name]
           ],
-          title = "Strapi CPU Usage",
+          title  = "Strapi CPU Usage",
           region = var.region
         }
       }
