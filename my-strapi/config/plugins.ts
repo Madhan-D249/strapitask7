@@ -50,13 +50,12 @@ export default () => ({
   },
 
   // Enable Webhooks (optional)
-  webhooks: {
-    enabled: true,
-  },
+ // webhooks: {
+   // enabled: true,
+  //},
 
   // Enable Single Sign-On (SSO) (optional, only if installed)
   'single-sign-on': {
     enabled: true,
   },
 });
-    
