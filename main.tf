@@ -6,13 +6,11 @@ data "aws_vpc" "default" {
   default = true
 }
 
-# CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "madhan_log_group" {
   name              = "/ecs/madhan-strapi-app"
   retention_in_days = 7
 }
 
-# Security Group
 resource "aws_security_group" "madhan_sg" {
   name        = "madhan-sg"
   description = "Allow HTTP, Strapi and PostgreSQL"
@@ -51,13 +49,11 @@ resource "aws_security_group" "madhan_sg" {
   }
 }
 
-# DB Subnet Group
 resource "aws_db_subnet_group" "strapi_db_subnet_group" {
   name       = "strapi-db-subnet-group-vetty"
   subnet_ids = ["subnet-0c0bb5df2571165a9", "subnet-0cc2ddb32492bcc41"]
 }
 
-# DB Parameter Group to disable SSL
 resource "aws_db_parameter_group" "strapi_pg" {
   name        = "strapi-db-pg"
   family      = "postgres12"
@@ -69,7 +65,6 @@ resource "aws_db_parameter_group" "strapi_pg" {
   }
 }
 
-# RDS PostgreSQL
 resource "aws_db_instance" "strapi_db" {
   identifier             = "strapi-db"
   engine                 = "postgres"
@@ -86,7 +81,6 @@ resource "aws_db_instance" "strapi_db" {
   parameter_group_name   = aws_db_parameter_group.strapi_pg.name
 }
 
-# ALB
 resource "aws_lb" "madhan_strapi_alb" {
   name               = "madhan-strapi-alb"
   internal           = false
@@ -99,7 +93,6 @@ resource "aws_lb" "madhan_strapi_alb" {
   }
 }
 
-# Target Group
 resource "aws_lb_target_group" "madhan_strapi_tg" {
   name        = "madhan-strapi-tg"
   port        = 1337
@@ -117,7 +110,6 @@ resource "aws_lb_target_group" "madhan_strapi_tg" {
   }
 }
 
-# Listener
 resource "aws_lb_listener" "madhan_listener" {
   load_balancer_arn = aws_lb.madhan_strapi_alb.arn
   port              = 80
@@ -129,20 +121,19 @@ resource "aws_lb_listener" "madhan_listener" {
   }
 }
 
-# ECS Cluster
 resource "aws_ecs_cluster" "madhan_strapi_cluster" {
   name = "madhan-strapi-cluster"
 }
 
-# ECS Task Definition
 resource "aws_ecs_task_definition" "madhan_strapi_task" {
   family                   = "madhan-strapi-task"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "512"
   memory                   = "1024"
-  execution_role_arn       = var.execution_role_arn
-  task_role_arn            = var.task_role_arn
+ execution_role_arn = aws_iam_role.madhan_ecs_execution_role.arn
+ task_role_arn      = aws_iam_role.madhan_ecs_task_role.arn
+
 
   container_definitions = jsonencode([{
     name      = "madhan-strapi"
@@ -167,26 +158,28 @@ resource "aws_ecs_task_definition" "madhan_strapi_task" {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        awslogs-group         = aws_cloudwatch_log_group.madhan_log_group.name
-        awslogs-region        = var.region
+        awslogs-group         = aws_cloudwatch_log_group.madhan_log_group.name,
+        awslogs-region        = var.region,
         awslogs-stream-prefix = "ecs"
       }
     }
   }])
 }
 
-# ECS Service
 resource "aws_ecs_service" "madhan_strapi_service" {
   name            = "madhan-strapi-service"
   cluster         = aws_ecs_cluster.madhan_strapi_cluster.id
   task_definition = aws_ecs_task_definition.madhan_strapi_task.arn
   desired_count   = 1
 
-  capacity_provider_strategy {
-    for_each          = toset(var.capacity_providers)
-    capacity_provider = each.key
+  dynamic "capacity_provider_strategy" {
+  for_each = var.capacity_providers
+  content {
+    capacity_provider = capacity_provider_strategy.value
     weight            = 1
   }
+}
+
 
   network_configuration {
     subnets          = ["subnet-0c0bb5df2571165a9", "subnet-0cc2ddb32492bcc41"]
@@ -204,4 +197,53 @@ resource "aws_ecs_service" "madhan_strapi_service" {
     aws_lb_listener.madhan_listener,
     aws_db_instance.strapi_db
   ]
+}
+
+# Execution Role
+resource "aws_iam_role" "madhan_ecs_execution_role" {
+  name = "madhan_ecsTaskExecutionRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        },
+        Effect = "Allow",
+        Sid    = ""
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "madhan_ecs_execution_role_policy" {
+  role       = aws_iam_role.madhan_ecs_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+# Task Role
+resource "aws_iam_role" "madhan_ecs_task_role" {
+  name = "madhan_ecsTaskRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        },
+        Effect = "Allow",
+        Sid    = ""
+      }
+    ]
+  })
+}
+
+# Optional: Attach basic read-only permissions (can customize later)
+resource "aws_iam_role_policy_attachment" "ecs_task_role_policy" {
+  role       = aws_iam_role.madhan_ecs_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
 }

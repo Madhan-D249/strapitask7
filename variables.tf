@@ -33,15 +33,6 @@ variable "api_token_salt" {
   sensitive   = true
 }
 
-variable "task_role_arn" {
-  description = "IAM role ARN for the ECS task"
-  type        = string
-}
-
-variable "execution_role_arn" {
-  description = "IAM role ARN for ECS task execution"
-  type        = string
-}
 
 # ✅ Add these for DB connection
 
