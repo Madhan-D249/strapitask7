@@ -15,25 +15,6 @@ export default () => ({
     },
   },
 
-  // Enable Email Plugin
-  email: {
-    config: {
-      provider: 'nodemailer',
-      providerOptions: {
-        host: 'smtp.example.com', // replace with your SMTP host
-        port: 587,
-        auth: {
-          user: 'madhandeva249@gmail.com',
-          pass: 'Madhan1234',
-        },
-      },
-      settings: {
-        defaultFrom: 'madhandeva249@gmail.com',
-        defaultReplyTo: 'madhandeva249@gmail.com',
-      },
-    },
-  },
-
   // Enable Roles & Permissions plugin
   'users-permissions': {
     enabled: true,
@@ -44,14 +25,4 @@ export default () => ({
     enabled: true,
   },
 
-  // Enable Review Workflows (optional)
-  'review-workflows': {
-    enabled: true,
-  },
-
-
-  // Enable Single Sign-On (SSO) (optional, only if installed)
-  'single-sign-on': {
-    enabled: true,
-  },
 });
