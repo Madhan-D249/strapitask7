@@ -1,3 +1,82 @@
+# Strapi ECS Deployment (Task #10)
+
+## ✅ Project Summary
+
+This project demonstrates how to deploy a **Strapi application** using **AWS ECS Fargate**, **Terraform**, and **GitHub Actions**. The backend is containerized, pushed to ECR, and deployed with an ALB.
+
+---
+
+## 📦 Tech Stack
+
+- Strapi (Node.js headless CMS)
+- Docker
+- AWS ECS Fargate
+- AWS ALB
+- ECR
+- Terraform
+- GitHub Actions
+- PostgreSQL (via AWS RDS or Docker)
+
+---
+
+## 🚀 Deployment Steps
+
+1. **Containerize the Strapi App**
+   - Dockerfile and docker-compose are set up in the `my-strapi/` folder.
+
+2. **Push Docker Image to ECR**
+   - Done using GitHub Actions CI workflow: `.github/workflows/deploy.yml`.
+
+3. **Provision AWS Infrastructure**
+   - Terraform files define ECS Cluster, Task Definition, Service, ALB, Security Groups, IAM Roles, etc.
+
+4. **Deploy to ECS**
+   - Terraform deploys the image from ECR to ECS Fargate.
+
+---
+
+## 🌐 Deployed URL
+
+```text
+http://madhan-strapi-alb-1555952243.us-east-2.elb.amazonaws.com
+The homepage loads successfully with a 200 OK response.
+
+⚠️ API Testing Status
+Admin panel opens but content types could not be created or published directly in the deployed environment.
+
+So, collection types (book, author, publisher) were created and published locally in development mode.
+
+Roles & Permissions were set locally to allow public access.
+
+The schema is deployed and visible in the repo under my-strapi/src/api/.
+
+ API like /api/books returns 404 Not Found in production, as the data was not created on the deployed DB.
+
+Local Development
+Clone repo and go into the my-strapi/ folder.
+
+Run:
+
+bash
+Copy
+Edit
+docker-compose up
+Open http://localhost:1337/admin and create the first admin.
+
+Create collection types and publish content.
+
+terraform/
+├── main.tf
+├── variables.tf
+├── outputs.tf
+├── terraform.tfvars
+my-strapi/
+├── src/api/book/
+├── src/api/author/
+├── src/api/publisher/
+├── Dockerfile
+├── docker-compose.yml
+
 # 🚀 Strapi on AWS Fargate with CI/CD & Monitoring using Terraform & GitHub Actions
 
 This project deploys a **Strapi CMS application** to **AWS ECS Fargate**, managed entirely with **Terraform**, and automated using a single **GitHub Actions workflow** (`deploy.yml`). It also includes **CloudWatch logging and monitoring** with metrics dashboards and optional alarms.
