@@ -2,10 +2,13 @@ output "strapi_url" {
   description = "Public URL of the Strapi application"
   value       = aws_lb.madhan_strapi_alb.dns_name
 }
-output "ecs_cluster_name" {
-  value = aws_ecs_cluster.madhan_strapi_cluster.name
+
+output "task_definition_arn" {
+  description = "ARN of the ECS Task Definition"
+  value       = aws_ecs_task_definition.madhan_strapi_task.arn
 }
 
-output "cloudwatch_log_group" {
-  value = aws_cloudwatch_log_group.madhan_log_group.name
+output "ecs_service_name" {
+  description = "Name of the ECS service"
+  value       = aws_ecs_service.madhan_strapi_service.name
 }

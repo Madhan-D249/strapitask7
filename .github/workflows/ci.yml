@@ -1,0 +1,43 @@
+name: CI - Strapi
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  AWS_REGION: us-east-2
+  IMAGE_NAME: strapi-appmaxxy
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com
+  IMAGE_URI: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/strapi-appmaxxy:latest
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker Image to ECR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker Image with tag `latest`
+        run: |
+          docker build -t ${{ env.IMAGE_URI }} ./my-strapi
+
+      - name: Push Docker Image to ECR
+        run: |
+          docker push ${{ env.IMAGE_URI }}
+
+      - name: Output Image URI
+        run: |
+          echo "Image pushed to: ${{ env.IMAGE_URI }}"

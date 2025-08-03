@@ -1,105 +1,119 @@
 provider "aws" {
   region = var.region
 }
-
-data "aws_vpc" "default" {
-  default = true
+resource "aws_iam_role" "ecs_task_execution_role" {
+  name = "madhan-strapi-execution-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action = "sts:AssumeRole",
+      Effect = "Allow",
+      Principal = {
+        Service = "ecs-tasks.amazonaws.com"
+      }
+    }]
+  })
 }
 
-resource "aws_cloudwatch_log_group" "madhan_log_group" {
-  name              = "/ecs/madhan-strapi-app"
+resource "aws_iam_role_policy_attachment" "ecs_execution_policy" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role" "ecs_task_role" {
+  name = "madhan-strapi-task-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action = "sts:AssumeRole",
+      Effect = "Allow",
+      Principal = {
+        Service = "ecs-tasks.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role" "codedeploy_service_role" {
+  name = "madhan-codedeploy-service-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "codedeploy.amazonaws.com"
+        },
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "codedeploy_ecs_policy" {
+  role       = aws_iam_role.codedeploy_service_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForECS"
+}
+
+
+resource "aws_ecs_cluster" "madhan_strapi_cluster" {
+  name = "madhan-strapi-cluster"
+}
+
+resource "aws_cloudwatch_log_group" "madhan_strapi_log_group" {
+  name              = "/ecs/madhan-strapi"
   retention_in_days = 7
 }
 
-resource "aws_security_group" "madhan_sg" {
-  name        = "madhan-sg"
-  description = "Allow HTTP, Strapi and PostgreSQL"
-  vpc_id      = data.aws_vpc.default.id
+resource "aws_ecs_task_definition" "madhan_strapi_task" {
+  family                   = "madhan-strapi-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "512"
+  memory                   = "1024"
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
 
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 1337
-    to_port     = 1337
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "madhan-sg"
-  }
-}
-
-resource "aws_db_subnet_group" "strapi_db_subnet_group" {
-  name       = "strapi-db-subnet-group-vetty"
-  subnet_ids = ["subnet-0c0bb5df2571165a9", "subnet-0cc2ddb32492bcc41"]
-}
-
-resource "aws_db_parameter_group" "strapi_pg" {
-  name        = "strapi-db-pg"
-  family      = "postgres12"
-  description = "Strapi DB parameter group with SSL disabled"
-
-  parameter {
-    name  = "rds.force_ssl"
-    value = "0"
-  }
-}
-
-resource "aws_db_instance" "strapi_db" {
-  identifier             = "strapi-db"
-  engine                 = "postgres"
-  engine_version         = "12.22"
-  instance_class         = "db.t3.micro"
-  allocated_storage      = 20
-  db_name                = var.db_name
-  username               = var.database_username
-  password               = var.database_password
-  publicly_accessible    = true
-  skip_final_snapshot    = true
-  vpc_security_group_ids = [aws_security_group.madhan_sg.id]
-  db_subnet_group_name   = aws_db_subnet_group.strapi_db_subnet_group.name
-  parameter_group_name   = aws_db_parameter_group.strapi_pg.name
+  container_definitions = jsonencode([{
+    name      = "madhan-strapi"
+    image     = var.container_image
+    essential = true
+    portMappings = [{
+      containerPort = 1337
+      hostPort      = 1337
+      protocol      = "tcp"
+    }]
+    environment = [
+      { name = "APP_KEYS",          value = var.app_keys },
+      { name = "ADMIN_JWT_SECRET", value = var.admin_jwt_secret },
+      { name = "JWT_SECRET",        value = var.jwt_secret },
+      { name = "API_TOKEN_SALT",    value = var.api_token_salt }
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.madhan_strapi_log_group.name
+        awslogs-region        = "us-east-2"
+        awslogs-stream-prefix = "ecs/madhan-strapi"
+      }
+    }
+  }])
 }
 
 resource "aws_lb" "madhan_strapi_alb" {
   name               = "madhan-strapi-alb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.madhan_sg.id]
-  subnets            = ["subnet-0c0bb5df2571165a9", "subnet-0cc2ddb32492bcc41"]
-
-  tags = {
-    Name = "madhan-strapi-alb"
-  }
+  security_groups    = [aws_security_group.madhan_alb_sg.id]
+  subnets            = ["subnet-0a1e6640cafebb652", "subnet-0f768008c6324831f"]
 }
 
-resource "aws_lb_target_group" "madhan_strapi_tg" {
-  name        = "madhan-strapi-tg"
+resource "aws_lb_target_group" "madhan_strapi_tg_blue" {
+  name        = "madhan-strapi-tg-blue"
   port        = 1337
   protocol    = "HTTP"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = "vpc-06ba36bca6b59f95e"
   target_type = "ip"
-
   health_check {
     path                = "/"
     interval            = 30
@@ -110,60 +124,140 @@ resource "aws_lb_target_group" "madhan_strapi_tg" {
   }
 }
 
-resource "aws_lb_listener" "madhan_listener" {
+resource "aws_lb_target_group" "madhan_strapi_tg_green" {
+  name        = "madhan-strapi-tg-green"
+  port        = 1337
+  protocol    = "HTTP"
+  vpc_id      = "vpc-06ba36bca6b59f95e"
+  target_type = "ip"
+  health_check {
+    path                = "/"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    matcher             = "200-399"
+  }
+}
+
+resource "aws_lb_listener" "madhan_strapi_listener" {
   load_balancer_arn = aws_lb.madhan_strapi_alb.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.madhan_strapi_tg.arn
+    target_group_arn = aws_lb_target_group.madhan_strapi_tg_blue.arn
   }
 }
 
-resource "aws_ecs_cluster" "madhan_strapi_cluster" {
-  name = "madhan-strapi-cluster"
+resource "aws_security_group" "madhan_strapi_sg" {
+  name        = "madhan-strapi-sg"
+  description = "Allow HTTP"
+  vpc_id      = "vpc-06ba36bca6b59f95e"
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port       = 1337
+    to_port         = 1337
+    protocol        = "tcp"
+    security_groups = [aws_security_group.madhan_alb_sg.id]
+    description     = "Allow ALB to access ECS task on port 1337"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
-resource "aws_ecs_task_definition" "madhan_strapi_task" {
-  family                   = "madhan-strapi-task"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = "512"
-  memory                   = "1024"
- execution_role_arn = aws_iam_role.madhan_ecs_execution_role.arn
- task_role_arn      = aws_iam_role.madhan_ecs_task_role.arn
+resource "aws_security_group" "madhan_alb_sg" {
+  name        = "madhan-alb-sg"
+  description = "Allow inbound HTTP from the internet"
+  vpc_id      = "vpc-06ba36bca6b59f95e"
 
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow HTTP traffic from the internet"
+  }
 
-  container_definitions = jsonencode([{
-    name      = "madhan-strapi"
-    image     = var.container_image
-    essential = true
-    portMappings = [{
-      containerPort = 1337
-      hostPort      = 1337
-    }]
-    environment = [
-      { name = "DATABASE_CLIENT", value = "postgres" },
-      { name = "DATABASE_HOST", value = aws_db_instance.strapi_db.address },
-      { name = "DATABASE_PORT", value = "5432" },
-      { name = "DATABASE_NAME", value = var.db_name },
-      { name = "DATABASE_USERNAME", value = var.database_username },
-      { name = "DATABASE_PASSWORD", value = var.database_password },
-      { name = "APP_KEYS", value = var.app_keys },
-      { name = "ADMIN_JWT_SECRET", value = var.admin_jwt_secret },
-      { name = "JWT_SECRET", value = var.jwt_secret },
-      { name = "API_TOKEN_SALT", value = var.api_token_salt }
-    ]
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        awslogs-group         = aws_cloudwatch_log_group.madhan_log_group.name,
-        awslogs-region        = var.region,
-        awslogs-stream-prefix = "ecs"
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow HTTPS traffic from the internet"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_codedeploy_app" "madhan_strapi" {
+  name              = "madhan-strapi"
+  compute_platform  = "ECS"
+}
+
+resource "aws_codedeploy_deployment_group" "madhan_strapi_dg" {
+  app_name               = aws_codedeploy_app.madhan_strapi.name
+  deployment_group_name  = "madhan-strapi-dg"
+  service_role_arn       = aws_iam_role.codedeploy_service_role.arn
+  deployment_config_name = "CodeDeployDefault.ECSCanary10Percent5Minutes"
+
+  deployment_style {
+    deployment_type   = "BLUE_GREEN"
+    deployment_option = "WITH_TRAFFIC_CONTROL"
+  }
+
+  auto_rollback_configuration {
+    enabled = true
+    events  = ["DEPLOYMENT_FAILURE"]
+  }
+
+  blue_green_deployment_config {
+    terminate_blue_instances_on_deployment_success {
+      action                            = "TERMINATE"
+      termination_wait_time_in_minutes  = 5
+    }
+
+    deployment_ready_option {
+      action_on_timeout = "CONTINUE_DEPLOYMENT"
+    }
+  }
+
+  ecs_service {
+    cluster_name = aws_ecs_cluster.madhan_strapi_cluster.name
+    service_name = aws_ecs_service.madhan_strapi_service.name
+  }
+
+  load_balancer_info {
+    target_group_pair_info {
+      prod_traffic_route {
+        listener_arns = [aws_lb_listener.madhan_strapi_listener.arn]
+      }
+      target_group {
+        name = aws_lb_target_group.madhan_strapi_tg_blue.name
+      }
+      target_group {
+        name = aws_lb_target_group.madhan_strapi_tg_green.name
       }
     }
-  }])
+  }
 }
 
 resource "aws_ecs_service" "madhan_strapi_service" {
@@ -172,78 +266,81 @@ resource "aws_ecs_service" "madhan_strapi_service" {
   task_definition = aws_ecs_task_definition.madhan_strapi_task.arn
   desired_count   = 1
 
-  dynamic "capacity_provider_strategy" {
-  for_each = var.capacity_providers
-  content {
-    capacity_provider = capacity_provider_strategy.value
-    weight            = 1
-  }
-}
+  launch_type = "FARGATE"
 
+  deployment_controller {
+    type = "CODE_DEPLOY"
+  }
 
   network_configuration {
-    subnets          = ["subnet-0c0bb5df2571165a9", "subnet-0cc2ddb32492bcc41"]
+    subnets         = ["subnet-0a1e6640cafebb652", "subnet-0f768008c6324831f"]
+    security_groups = [aws_security_group.madhan_strapi_sg.id]
     assign_public_ip = true
-    security_groups  = [aws_security_group.madhan_sg.id]
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.madhan_strapi_tg.arn
+    target_group_arn = aws_lb_target_group.madhan_strapi_tg_blue.arn
     container_name   = "madhan-strapi"
     container_port   = 1337
   }
 
-  depends_on = [
-    aws_lb_listener.madhan_listener,
-    aws_db_instance.strapi_db
-  ]
+  depends_on = [aws_lb_listener.madhan_strapi_listener]
 }
 
-# Execution Role
-resource "aws_iam_role" "madhan_ecs_execution_role" {
-  name = "madhan_ecsTaskExecutionRole"
+resource "aws_cloudwatch_metric_alarm" "cpu_utilization_alarm" {
+  alarm_name          = "HighCPUUtilization"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
+  period              = "60"
+  statistic           = "Average"
+  threshold           = "80"
+  alarm_description   = "Alarm when CPU exceeds 80%"
+  dimensions = {
+    ClusterName = aws_ecs_cluster.madhan_strapi_cluster.name
+    ServiceName = aws_ecs_service.madhan_strapi_service.name
+  }
+}
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
+resource "aws_cloudwatch_metric_alarm" "memory_utilization_alarm" {
+  alarm_name          = "HighMemoryUtilization"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/ECS"
+  period              = "60"
+  statistic           = "Average"
+  threshold           = "80"
+  alarm_description   = "Alarm when memory exceeds 80%"
+  dimensions = {
+    ClusterName = aws_ecs_cluster.madhan_strapi_cluster.name
+    ServiceName = aws_ecs_service.madhan_strapi_service.name
+  }
+}
+
+resource "aws_cloudwatch_dashboard" "strapi_dashboard" {
+  dashboard_name = "madhan-StrapiDashboard"
+
+  dashboard_body = jsonencode({
+    widgets = [
       {
-        Action = "sts:AssumeRole",
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        },
-        Effect = "Allow",
-        Sid    = ""
+        type = "metric",
+        x    = 0,
+        y    = 0,
+        width = 12,
+        height = 6,
+        properties = {
+          metrics = [
+            [ "AWS/ECS", "CPUUtilization", "ClusterName", aws_ecs_cluster.madhan_strapi_cluster.name, "ServiceName", aws_ecs_service.madhan_strapi_service.name ],
+            [ "AWS/ECS", "MemoryUtilization", "ClusterName", aws_ecs_cluster.madhan_strapi_cluster.name, "ServiceName", aws_ecs_service.madhan_strapi_service.name ]
+          ],
+          view = "timeSeries",
+          stacked = false,
+          region = "us-east-2",
+          title = "ECS Service Metrics"
+        }
       }
     ]
   })
-}
-
-resource "aws_iam_role_policy_attachment" "madhan_ecs_execution_role_policy" {
-  role       = aws_iam_role.madhan_ecs_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
-# Task Role
-resource "aws_iam_role" "madhan_ecs_task_role" {
-  name = "madhan_ecsTaskRole"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Action = "sts:AssumeRole",
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        },
-        Effect = "Allow",
-        Sid    = ""
-      }
-    ]
-  })
-}
-
-# Optional: Attach basic read-only permissions (can customize later)
-resource "aws_iam_role_policy_attachment" "ecs_task_role_policy" {
-  role       = aws_iam_role.madhan_ecs_task_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
 }
