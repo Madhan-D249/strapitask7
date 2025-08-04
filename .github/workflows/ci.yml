@@ -8,8 +8,6 @@ on:
 env:
   AWS_REGION: us-east-2
   IMAGE_NAME: strapi-appmaxxy
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com
-  IMAGE_URI: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com/strapi-appmaxxy:latest
 
 jobs:
   build-and-push:
@@ -30,14 +28,18 @@ jobs:
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Set IMAGE_URI
+        run: |
+          echo "IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_ENV
+
       - name: Build Docker Image with tag `latest`
         run: |
-          docker build -t ${{ env.IMAGE_URI }} ./my-strapi
+          docker build -t $IMAGE_URI ./my-strapi
 
       - name: Push Docker Image to ECR
         run: |
-          docker push ${{ env.IMAGE_URI }}
+          docker push $IMAGE_URI
 
       - name: Output Image URI
         run: |
-          echo "Image pushed to: ${{ env.IMAGE_URI }}"
+          echo "Image pushed to: $IMAGE_URI"
