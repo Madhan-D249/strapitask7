@@ -1,3 +1,60 @@
+
+# 🚀 Strapi Blue/Green Deployment on AWS using Terraform + GitHub Actions
+
+This project automates the **Blue/Green deployment** of a Dockerized Strapi application on AWS ECS Fargate using:
+
+- **Terraform** for infrastructure provisioning.
+- **AWS CodeDeploy** for Blue/Green traffic shifting.
+- **GitHub Actions** for CI/CD.
+- **GitHub Artifacts** for Terraform state storage (no S3 required).
+
+---
+
+## 📂 Project Structure
+github/workflows/
+| ci.yml 
+│ └── cd.yml # Terraform CD pipeline
+├── terraform/
+│ ├── main.tf # Main Terraform config
+│ ├── variables.tf # Variable definitions
+│ └── terraform.tfstate # State file (downloaded/uploaded via GitHub)
+├── Dockerfile # Strapi Docker config
+└── README.md
+
+## 🔑 Secrets Required
+
+Set these in your repository's GitHub secrets:
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_ACCOUNT_ID`
+- `APP_KEYS`
+- `JWT_SECRET`
+- `ADMIN_JWT_SECRET`
+- `API_TOKEN_SALT`
+
+
+## 📦 Terraform Modules Used
+
+- `aws_ecs_service`
+- `aws_codedeploy_app`
+- `aws_codedeploy_deployment_group`
+- `aws_iam_role`
+- `aws_lb` and `aws_lb_target_group`
+
+
+# 🔍 Observability
+
+- **CloudWatch Dashboard** for CPU & Memory.
+- **CodeDeploy Events** for deployment progress.
+- **Logs** streamed from ECS to CloudWatch.
+
+---
+
+## 📸 Example: Blue/Green Visualization
+ALB --> [BLUE Target Group maddy)] --> ECS Fargate
+
+--> [GREEN Target Group maxxy] --> ECS Fargate (on new deployment)
 # Strapi ECS Deployment (Task #10)
 
 ## ✅ Project Summary
