@@ -8,6 +8,8 @@ on:
 
 env:
   AWS_REGION: us-east-2
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  ECR_REPOSITORY: strapi-appmaxxy
 
 jobs:
   deploy:
@@ -28,11 +30,30 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Determine Image URI
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "IMAGE_URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Generate image.auto.tfvars
+        env:
+          APP_KEYS: ${{ secrets.APP_KEYS }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
+          API_TOKEN_SALT: ${{ secrets.API_TOKEN_SALT }}
+        run: |
+          echo "container_image = \"$IMAGE_URI\"" > image.auto.tfvars
+          echo "app_keys = \"${APP_KEYS//[$'\t\r\n']}\"" >> image.auto.tfvars
+          echo "jwt_secret = \"${JWT_SECRET//[$'\t\r\n']}\"" >> image.auto.tfvars
+          echo "admin_jwt_secret = \"${ADMIN_JWT_SECRET//[$'\t\r\n']}\"" >> image.auto.tfvars
+          echo "api_token_salt = \"${API_TOKEN_SALT//[$'\t\r\n']}\"" >> image.auto.tfvars
+
       - name: Terraform Init
         run: terraform init
 
       - name: Terraform Plan
-        run: terraform plan -var-file="terraform.tfvars"
+        run: terraform plan
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var-file="terraform.tfvars"
+        run: terraform apply -auto-approve
