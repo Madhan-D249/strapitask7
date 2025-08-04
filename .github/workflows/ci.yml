@@ -8,6 +8,7 @@ on:
 env:
   AWS_REGION: us-east-2
   IMAGE_NAME: strapi-appmaxxy
+  IMAGE_TAG: maddy  # <-- Change this to your custom tag
 
 jobs:
   build-and-push:
@@ -30,9 +31,9 @@ jobs:
 
       - name: Set IMAGE_URI
         run: |
-          echo "IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_ENV
+          echo "IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
 
-      - name: Build Docker Image with tag `latest`
+      - name: Build Docker Image with tag `${{ env.IMAGE_TAG }}`
         run: |
           docker build -t $IMAGE_URI ./my-strapi
 
