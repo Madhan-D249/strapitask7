@@ -50,36 +50,10 @@ resource "aws_iam_role" "codedeploy_service_role" {
     ]
   })
 }
-
-resource "aws_iam_policy" "codedeploy_ecs_permissions" {
-  name = "CodeDeployECSPermissions"
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Action = [
-          "ecs:DescribeServices",
-          "ecs:UpdateService",
-          "elasticloadbalancing:DescribeTargetGroups",
-          "elasticloadbalancing:DescribeListeners",
-          "elasticloadbalancing:ModifyListener",
-          "elasticloadbalancing:DescribeRules",
-          "elasticloadbalancing:ModifyRule",
-          "codedeploy:*"
-        ],
-        Resource = "*"
-      }
-    ]
-  })
-}
-
 resource "aws_iam_role_policy_attachment" "codedeploy_ecs_policy" {
   role       = aws_iam_role.codedeploy_service_role.name
-  policy_arn = aws_iam_policy.codedeploy_ecs_permissions.arn
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForECS"
 }
-
-
 
 resource "aws_ecs_cluster" "madhan_strapi_cluster" {
   name = "madhan-strapi-cluster"
