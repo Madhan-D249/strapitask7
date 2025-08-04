@@ -2,6 +2,15 @@ name: CD - Terraform Deployment
 
 on:
   workflow_dispatch:
+    inputs:
+      action:
+        description: "Terraform action to perform (apply/destroy)"
+        required: true
+        default: "apply"
+        type: choice
+        options:
+          - apply
+          - destroy
 
 env:
   AWS_REGION: us-east-2
@@ -27,12 +36,14 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Determine Image URI
+        if: ${{ github.event.inputs.action == 'apply' }}
         run: |
           IMAGE_TAG=${{ github.sha }}
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
           echo "IMAGE_URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_ENV
 
       - name: Generate image.auto.tfvars
+        if: ${{ github.event.inputs.action == 'apply' }}
         env:
           APP_KEYS: ${{ secrets.APP_KEYS }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -49,7 +60,13 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan
+        if: ${{ github.event.inputs.action == 'apply' }}
         run: terraform plan
 
       - name: Terraform Apply
+        if: ${{ github.event.inputs.action == 'apply' }}
         run: terraform apply -auto-approve
+
+      - name: Terraform Destroy
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: terraform destroy -auto-approve
