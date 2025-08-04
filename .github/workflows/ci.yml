@@ -8,7 +8,7 @@ on:
 env:
   AWS_REGION: us-east-2
   IMAGE_NAME: strapi-appmaxxy
-  IMAGE_TAG: maddy  # <-- Change this to your custom tag
+  IMAGE_TAG: maxxy # <-- Change this to your custom tag
 
 jobs:
   build-and-push:
