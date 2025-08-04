@@ -34,7 +34,6 @@ resource "aws_iam_role" "ecs_task_role" {
     }]
   })
 }
-
 resource "aws_iam_role" "codedeploy_service_role" {
   name = "madhan-codedeploy-service-role"
   assume_role_policy = jsonencode({
@@ -50,9 +49,29 @@ resource "aws_iam_role" "codedeploy_service_role" {
     ]
   })
 }
+
 resource "aws_iam_role_policy_attachment" "codedeploy_ecs_policy" {
   role       = aws_iam_role.codedeploy_service_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForECS"
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS" # ✅ Corrected
+}
+
+resource "aws_iam_role_policy" "codedeploy_extra_ecs_permissions" {
+  name = "AllowECSDescribePermissions"
+  role = aws_iam_role.codedeploy_service_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ecs:DescribeServices",
+          "ecs:DescribeTaskDefinition"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 resource "aws_ecs_cluster" "madhan_strapi_cluster" {
@@ -342,4 +361,4 @@ resource "aws_cloudwatch_dashboard" "strapi_dashboard" {
       }
     ]
   })
-}
+}  
