@@ -62,9 +62,10 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan
-        run: terraform plan \
-          -var="image_tag=${{ env.IMAGE_TAG }}" \
-          -var="ecr_repo=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}"  
+        run: |
+          echo "Running Terraform plan..."
+          terraform plan -var="image_tag=${{ env.IMAGE_TAG }}" -var="ecr_repo=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}"
+
 
       - name: Terraform Apply
         run: |
