@@ -1,6 +1,9 @@
 provider "aws" {
   region = var.region
 }
+locals {
+  container_image = "${var.ecr_repo}:${var.image_tag}"
+}
 
 resource "aws_iam_role" "ecs_task_execution_role" {
   name = "madhan-strapi-execution-role"
@@ -94,7 +97,7 @@ resource "aws_ecs_task_definition" "madhan_strapi_task" {
 
   container_definitions = jsonencode([{
     name      = "madhan-strapi"
-    image     = var.container_image
+    image = local.container_image
     essential = true
     portMappings = [{
       containerPort = 1337

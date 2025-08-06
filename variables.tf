@@ -4,11 +4,6 @@ variable "region" {
   default     = "us-east-2"
 }
 
-variable "container_image" {
-  description = "The full image URI for the container"
-  type        = string
-}
-
 variable "app_keys" {
   description = "Strapi app keys"
   type        = string
@@ -32,3 +27,12 @@ variable "api_token_salt" {
   type        = string
   sensitive   = true
 }
+variable "image_tag" {
+  description = "Docker image tag (usually the Git SHA)"
+  type        = string
+}
+variable "ecr_repo" {
+  description = "ECR repository URI"
+  type        = string
+}
+
