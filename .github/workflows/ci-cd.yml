@@ -53,34 +53,44 @@ jobs:
           name: image-tag
           path: image_tag.txt
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Apply with image tag
+      - name: Terraform Apply
         run: |
           terraform apply -auto-approve \
-            -var="image_tag=${IMAGE_TAG}" \
-            -var="ecr_repo=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
+          -var="image_tag=${IMAGE_TAG}" \
+          -var="ecr_repo=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Trigger CodeDeploy deployment
         id: deploy
         run: |
           deployment_id=$(aws deploy create-deployment \
-            --application-name $CODEDEPLOY_APP_NAME \
-            --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP \
-            --revision revisionType=AppSpecContent,appSpecContent="{\"content\":\"version: 0.0\nResources:\n  - TargetService:\n      Type: AWS::ECS::Service\n      Properties:\n        TaskDefinition: arn:aws:ecs:${AWS_REGION}:${AWS_ACCOUNT_ID}:task-definition/madhan-strapi-task\"}" \
-            --query "deploymentId" --output text)
+          --application-name $CODEDEPLOY_APP_NAME \
+          --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP \
+          --revision revisionType=AppSpecContent,appSpecContent="{\"content\":\"version: 0.0\nResources:\n  - TargetService:\n      Type: AWS::ECS::Service\n      Properties:\n        TaskDefinition: arn:aws:ecs:${AWS_REGION}:${AWS_ACCOUNT_ID}:task-definition/madhan-strapi-task\"}" \
+          --query "deploymentId" --output text)
           echo "Deployment triggered: $deployment_id"
-          echo "deployment_id=$deployment_id" >> $GITHUB_ENV
-          echo "::set-output name=deployment_id::$deployment_id"
+          echo "deployment_id=$deployment_id" >> $GITHUB_OUTPUT
+
 
       - name: Wait for deployment to complete
         run: |
-          echo "Waiting for deployment $DEPLOYMENT_ID to finish..."
-          aws deploy wait deployment-successful --deployment-id "$DEPLOYMENT_ID"
+          echo "Waiting for deployment ${{ steps.deploy.outputs.deployment_id }} to finish..."
+          aws deploy wait deployment-successful --deployment-id "${{ steps.deploy.outputs.deployment_id }}"
+
 
       - name: Confirm deployment success
-        run: echo "Deployment $DEPLOYMENT_ID completed successfully."
+        run: echo "Deployment ${{ steps.deploy.outputs.deployment_id }} completed successfully."
+
 
       - name: Rollback if deployment fails
         if: failure()
@@ -90,5 +100,4 @@ jobs:
           aws deploy get-deployment --deployment-id "$DEPLOYMENT_ID"
           echo "Rolling back..."
           aws deploy stop-deployment --deployment-id "$DEPLOYMENT_ID" --auto-rollback-enabled
-
 
