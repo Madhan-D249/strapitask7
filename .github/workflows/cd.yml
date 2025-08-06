@@ -2,28 +2,17 @@ name: CD - Terraform Deployment
 
 on:
   workflow_run:
-    workflows: ["CI - Build and Push Docker Image"]
+    workflows: ["CI - Build and Push"]  # Name of your CI workflow (check in Actions tab)
     types:
       - completed
 
-
-
-env:
-  AWS_REGION: us-east-2
-  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-  ECR_REPOSITORY: strapi-appmaxxy
-  CODEDEPLOY_APP_NAME: strapi-appmaxxy-cd
-  CODEDEPLOY_DEPLOYMENT_GROUP: strapi-appmaxxy-cd-group
-
 jobs:
   terraform-apply:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download image tag artifact
+      - name: Download image-tag
         uses: actions/download-artifact@v4
         with:
           name: image-tag
@@ -60,7 +49,8 @@ jobs:
           deployment_id=$(aws deploy create-deployment \
             --application-name $CODEDEPLOY_APP_NAME \
             --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP \
-            --revision revisionType=AppSpecContent,appSpecContent="{\"content\":\"version: 0.0\nResources:\n  - TargetService:\n      Type: AWS::ECS::Service\n      Properties:\n        TaskDefinition: arn:aws:ecs:${AWS_REGION}:${AWS_ACCOUNT_ID}:task-definition/strapi-task\n        LoadBalancerInfo:\n          ContainerName: strapi\n          ContainerPort: 1337\n\"}" \
+            --revision revisionType=AppSpecContent,appSpecContent="{\"content\":\"version: 0.0\nResources:\n  - TargetService:\n      Type: AWS::ECS::Service\n      Properties:\n        TaskDefinition: arn:aws:ecs:${AWS_REGION}:${AWS_ACCOUNT_ID}:task-definition/madhan-strapi-task
+
             --query "deploymentId" --output text)
           echo "DEPLOYMENT_ID=$deployment_id" >> $GITHUB_ENV
           echo "Deployment triggered: $deployment_id"
