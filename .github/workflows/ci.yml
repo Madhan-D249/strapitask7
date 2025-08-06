@@ -31,7 +31,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t $ECR_REPOSITORY:$IMAGE_TAG -f ./my-strapi
+         docker buildx build -t $ECR_REPOSITORY:$IMAGE_TAG -f ./my-strapi/Dockerfile ./my-strapi
+
 
       - name: Tag image
         run: |
