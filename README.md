@@ -1,4 +1,4 @@
-# Strapi Blue/Green Deployment with GitHub Actions, ECS Fargate, and CodeDeploy
+# (TASK 12) Strapi Blue/Green Deployment with GitHub Actions, ECS Fargate, and CodeDeploy
 
 ## 🚀 Overview
 
