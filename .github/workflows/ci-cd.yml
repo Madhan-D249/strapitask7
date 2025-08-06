@@ -70,8 +70,9 @@ jobs:
             --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP \
             --revision revisionType=AppSpecContent,appSpecContent="{\"content\":\"version: 0.0\nResources:\n  - TargetService:\n      Type: AWS::ECS::Service\n      Properties:\n        TaskDefinition: arn:aws:ecs:${AWS_REGION}:${AWS_ACCOUNT_ID}:task-definition/madhan-strapi-task\"}" \
             --query "deploymentId" --output text)
-          echo "DEPLOYMENT_ID=$deployment_id" >> $GITHUB_ENV
           echo "Deployment triggered: $deployment_id"
+          echo "deployment_id=$deployment_id" >> $GITHUB_ENV
+          echo "::set-output name=deployment_id::$deployment_id"
 
       - name: Wait for deployment to complete
         run: |
@@ -84,8 +85,10 @@ jobs:
       - name: Rollback if deployment fails
         if: failure()
         run: |
+          DEPLOYMENT_ID=${{ steps.deploy.outputs.deployment_id }}
           echo "Deployment failed. Checking status..."
           aws deploy get-deployment --deployment-id "$DEPLOYMENT_ID"
           echo "Rolling back..."
           aws deploy stop-deployment --deployment-id "$DEPLOYMENT_ID" --auto-rollback-enabled
+
 
