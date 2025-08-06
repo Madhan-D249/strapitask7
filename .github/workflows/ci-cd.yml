@@ -7,8 +7,8 @@ on:
 
 env:
   AWS_REGION: us-east-2
-  ECR_REPOSITORY: strapi-appmaxxy
   AWS_ACCOUNT_ID: 607700977843
+  ECR_REPOSITORY: strapi-appmaxxy
   CONTAINER_NAME: madhan-strapi
   ECS_CLUSTER: madhan-strapi-cluster
   ECS_SERVICE: madhan-strapi-service
@@ -63,60 +63,46 @@ jobs:
 
       - name: Terraform Plan
         run: |
-          echo "Running Terraform plan..."
           terraform plan -input=false -no-color \
           -var="image_tag=${{ env.IMAGE_TAG }}" \
-          -var="ecr_repo=${{ env.ECR_REPO }}" \
+          -var="ecr_repo=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}" \
           -var="app_keys=${{ secrets.APP_KEYS }}" \
           -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
           -var="admin_jwt_secret=${{ secrets.ADMIN_JWT_SECRET }}" \
           -var="api_token_salt=${{ secrets.API_TOKEN_SALT }}"
-
 
       - name: Terraform Apply
-        if: github.event.inputs.run_apply == 'true'
         run: |
-          echo "Running Terraform apply..."
           terraform apply -auto-approve -input=false -no-color \
           -var="image_tag=${{ env.IMAGE_TAG }}" \
-          -var="ecr_repo=${{ env.ECR_REPO }}" \
+          -var="ecr_repo=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}" \
           -var="app_keys=${{ secrets.APP_KEYS }}" \
           -var="jwt_secret=${{ secrets.JWT_SECRET }}" \
           -var="admin_jwt_secret=${{ secrets.ADMIN_JWT_SECRET }}" \
           -var="api_token_salt=${{ secrets.API_TOKEN_SALT }}"
-
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Trigger CodeDeploy deployment
         id: deploy
         run: |
           deployment_id=$(aws deploy create-deployment \
-          --application-name $CODEDEPLOY_APP_NAME \
-          --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP \
-          --revision revisionType=AppSpecContent,appSpecContent="{\"content\":\"version: 0.0\nResources:\n  - TargetService:\n      Type: AWS::ECS::Service\n      Properties:\n        TaskDefinition: arn:aws:ecs:${AWS_REGION}:${AWS_ACCOUNT_ID}:task-definition/madhan-strapi-task\"}" \
-          --query "deploymentId" --output text)
-          echo "Deployment triggered: $deployment_id"
+            --application-name $CODEDEPLOY_APP_NAME \
+            --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP \
+            --revision revisionType=AppSpecContent,appSpecContent="{\"content\":\"version: 0.0\nResources:\n  - TargetService:\n      Type: AWS::ECS::Service\n      Properties:\n        TaskDefinition: arn:aws:ecs:${AWS_REGION}:${AWS_ACCOUNT_ID}:task-definition/${CONTAINER_NAME}-task\"}" \
+            --query "deploymentId" --output text)
           echo "deployment_id=$deployment_id" >> $GITHUB_OUTPUT
-
+          echo "Deployment triggered: $deployment_id"
 
       - name: Wait for deployment to complete
         run: |
           echo "Waiting for deployment ${{ steps.deploy.outputs.deployment_id }} to finish..."
           aws deploy wait deployment-successful --deployment-id "${{ steps.deploy.outputs.deployment_id }}"
 
-
       - name: Confirm deployment success
         run: echo "Deployment ${{ steps.deploy.outputs.deployment_id }} completed successfully."
-
 
       - name: Rollback if deployment fails
         if: failure()
         run: |
           DEPLOYMENT_ID=${{ steps.deploy.outputs.deployment_id }}
-          echo "Deployment failed. Checking status..."
-          aws deploy get-deployment --deployment-id "$DEPLOYMENT_ID"
-          echo "Rolling back..."
+          echo "Deployment failed. Rolling back..."
           aws deploy stop-deployment --deployment-id "$DEPLOYMENT_ID" --auto-rollback-enabled
-
