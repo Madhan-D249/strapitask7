@@ -1,3 +1,53 @@
+
+# Strapi Blue/Green Deployment with GitHub Actions, ECS Fargate, and CodeDeploy
+
+## 🚀 Overview
+
+This project demonstrates a CI/CD pipeline to deploy a containerized Strapi application on AWS using:
+- Amazon ECR
+- Amazon ECS (Fargate)
+- AWS CodeDeploy with Blue/Green deployment
+- GitHub Actions for automation
+
+---
+
+## 📌 Features
+
+- Build and push Docker image tagged with GitHub commit SHA
+- Dynamically update ECS Task Definition with new image
+- Trigger CodeDeploy Blue/Green deployment
+- Canary deployment strategy with rollback on failure
+
+---
+
+## 🛠️ Technologies Used
+
+- GitHub Actions
+- AWS ECS (Fargate)
+- Amazon ECR
+- AWS CodeDeploy
+- Terraform (for infrastructure provisioning)
+- Docker
+
+---
+
+## 📂 Project Structure
+
+```bash
+├── .github/
+│   └── workflows/
+│       └── ci-cd.yml  
+my-strapi
+├── Dockerfile
+├── docker-compose.yml
+├── .github/
+│   └── workflows/
+│       └── ci-cd.yml         # GitHub Actions workflow
+├── terraform/
+│   ├── main.tf                # ECS, ALB, CodeDeploy setup
+│   └── ...
+├── app/                       # Strapi source code
+
 # 🚀 Getting started with Strapi
 
 Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.
