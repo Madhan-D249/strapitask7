@@ -6,7 +6,7 @@ on:
       - master
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: us-east-2
   ECR_REPOSITORY: strapi-appmaxxy
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
