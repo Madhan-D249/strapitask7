@@ -136,7 +136,7 @@ resource "aws_lb_target_group" "madhan_strapi_tg_blue" {
   vpc_id      = "vpc-06ba36bca6b59f95e"
   target_type = "ip"
   health_check {
-    path                = "/"
+    path                = "/admin"
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
@@ -152,7 +152,7 @@ resource "aws_lb_target_group" "madhan_strapi_tg_green" {
   vpc_id      = "vpc-06ba36bca6b59f95e"
   target_type = "ip"
   health_check {
-    path                = "/"
+    path                = "/admin"
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
