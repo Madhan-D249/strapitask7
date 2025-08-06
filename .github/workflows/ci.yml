@@ -35,7 +35,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           IMAGE_URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}
-          docker build -t $IMAGE_URI .
+          docker build -t $IMAGE_URI ./my-strapi
           docker push $IMAGE_URI
           echo $IMAGE_TAG > image_tag.txt
 
