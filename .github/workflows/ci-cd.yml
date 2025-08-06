@@ -12,7 +12,7 @@ env:
   CONTAINER_NAME: madhan-strapi
   ECS_CLUSTER: madhan-strapi-cluster
   ECS_SERVICE: madhan-strapi-service
-  CODEDEPLOY_APP_NAME: madhan-strapi-app
+  CODEDEPLOY_APP_NAME: madhan-strapi
   CODEDEPLOY_DEPLOYMENT_GROUP: madhan-strapi-dg
 
 jobs:
@@ -81,7 +81,7 @@ jobs:
           -var="admin_jwt_secret=${{ secrets.ADMIN_JWT_SECRET }}" \
           -var="api_token_salt=${{ secrets.API_TOKEN_SALT }}"
 
-            - name: Deploy to ECS using CodeDeploy
+      - name: Deploy to ECS using CodeDeploy
         id: deploy
         run: |
           echo "🚀 Triggering deployment via CodeDeploy..."
