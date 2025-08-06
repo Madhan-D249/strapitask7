@@ -46,7 +46,23 @@ my-strapi
 │   ├── main.tf                # ECS, ALB, CodeDeploy setup
 │   └── ...
 ├── app/                       # Strapi source code
+🔄 CI/CD Workflow (.github/workflows/deploy.yml)
+Build Image
+Builds Docker image from Strapi source.
 
+Tag Image
+Tags the image with the commit SHA.
+
+Push to ECR
+Pushes the image to Amazon ECR.
+
+Update Task Definition
+Replaces old image tag with new one in ECS task definition.
+
+Trigger CodeDeploy
+Starts a new deployment using Blue/Green strategy.
+
+Access via: http://madhan-strapi-alb-1683942165.us-east-2.elb.amazonaws.com/admin
 
 # 🚀 Strapi Blue/Green Deployment on AWS using Terraform + GitHub Actions
 
