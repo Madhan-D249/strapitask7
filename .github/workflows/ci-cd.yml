@@ -3,7 +3,7 @@ name: CI/CD - Strapi Deployment
 on:
   push:
     branches:
-      - master
+      - ma
 
 env:
   AWS_REGION: us-east-2
