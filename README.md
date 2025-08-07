@@ -1,3 +1,42 @@
+
+# 🚀 Docker Swarm Cronjobs – Task13
+
+## 📘 Introduction
+
+Docker Swarm is a container orchestration tool that helps manage containers across multiple nodes (machines). It is simple and powerful, but it **does not support CronJobs natively** like Kubernetes does.
+
+A **CronJob** is a task that runs automatically on a schedule — for example, printing logs every 1 minute or taking backups every night at 12AM.
+
+Since Docker Swarm doesn’t support cronjobs directly, we need to use alternative solutions like:
+: Try Out a Tool Called swarm-cronjob
+There is a tool called swarm-cronjob that helps us run cronjobs in Docker Swarm.
+
+You will:
+
+Install Docker Swarm
+
+Deploy this tool
+
+Create a small cronjob (e.g., print date every 1 minute)
+
+Check if it's working
+
+- 🧩 Using host system `crontab` to trigger Docker commands
+- 🐳 Running cron inside a container
+- 🔧 Using open-source tools like [`swarm-cronjob`](https://github.com/crazy-max/swarm-cronjob)
+
+In this task, we will explore how to run scheduled jobs in Docker Swarm using the `swarm-cronjob` tool, with full setup, screenshots, and explanations.
+
+---
+
+## 📂 Project Structure
+
+task13/
+├── README.md ← This file
+└── images/ ← Screenshots of your work
+├── service-list.png
+├── cronjob-output.png
+└── cronjob-inspect.png
 # (TASK 12) Strapi Blue/Green Deployment with GitHub Actions, ECS Fargate, and CodeDeploy
 
 ## 🚀 Overview
