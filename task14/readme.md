@@ -10,18 +10,18 @@
 - [Dashboard Access](#dashboard-access)
 
 📌 What is Unleash? (Simplified Explanation)
---------------------------------------------------
+
  • Unleash is a feature flag management tool.
  • It allows you to control specific features in your app — you can enable or disable them without changing or redeploying your code.
 
 🧠 Example:
----------------
+
     Let’s say you added a new update to your app. Using Unleash:
     • You enable it for testing.
     • If any error occurs, you can quickly disable it — no need to remove the code or redeploy.
 
 ✅ This helps with:
------------------------    
+
      •  Safe rollout of features
       • Faster rollback during errors
        • Testing features with real users (A/B testing)
@@ -37,7 +37,6 @@
    • Experiment and A/B test features for better product decisions.
 
 🧠 Real-world Use Case:
-------------------------
    • Let’s say you’re releasing a new login flow. With Unleash:
    • You can enable it only for internal team members first.
    • If it works fine, you can slowly enable it for more users.
@@ -217,7 +216,7 @@ const MyComponent = () => {
 export default MyComponent;
 ```
 Why Use a Feature Flag 
-----------------------------
+
  • you're using a feature flag to conditionally enable or disable parts of your UI or functionality, without changing your code or redeploying your app.
 
 ✅ Purpose of Feature Flags:
@@ -253,13 +252,13 @@ Now:
   * Once confirmed, turn it ON for all users — no code change needed.
 
 ✅ Step 6: Create a Feature Toggle in Unleash Dashboard
+
    1.Go to http://localhost:4242
    2.Click on “Feature Toggles” > “Create a new feature toggle”
    3.Set Name as: my-new-feature
    4.Toggle it ON in the development environment
    5.Save and test it in your React app
 🚀 You’re Done!
----------------------
 * Now your React app is:
 * Using Unleash to check feature flags
 * Conditionally rendering based on flag values
