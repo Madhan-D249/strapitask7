@@ -45,7 +45,8 @@ my-strapi
 ├── terraform/
 │   ├── main.tf                # ECS, ALB, CodeDeploy setup
 │   └── ...
-├── app/                       # Strapi source code
+├── app/     
+```                  # Strapi source code
 🔄 CI/CD Workflow (.github/workflows/deploy.yml)
 Build Image
 Builds Docker image from Strapi source.
