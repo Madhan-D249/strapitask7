@@ -1,7 +1,16 @@
 📄 Task #14: Unleash Feature Flag Documentation
 ***************************************************
+### 📚 Table of Contents
+
+- [What is Unleash?](#what-is-unleash)
+- [Use Cases](#use-cases)
+- [Setup Unleash with Docker Compose](#setup-unleash-with-docker-compose)
+- [Integrate with React App](#integrate-with-react-app)
+- [Wrapper Component](#wrapper-component)
+- [Dashboard Access](#dashboard-access)
 
 📌 What is Unleash? (Simplified Explanation)
+--------------------------------------------------
  • Unleash is a feature flag management tool.
  • It allows you to control specific features in your app — you can enable or disable them without changing or redeploying your code.
 
